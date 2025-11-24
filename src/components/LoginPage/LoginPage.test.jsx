@@ -336,14 +336,15 @@ describe("LoginPage", () => {
 
       await waitFor(() => {
         expect(toast.error).toHaveBeenCalledWith(
-          "Erro ao fazer login. Verifique suas credenciais."
+          "Credenciais inválidas. Verifique seu usuário e senha."
         );
       });
     });
 
-    it("mostra mensagem de erro específica quando disponível", async () => {
-      const errorMessage = "Credenciais inválidas";
-      mockLogin.mockRejectedValue({ message: errorMessage });
+    it("sempre mostra mensagem genérica mesmo quando há mensagem específica (segurança)", async () => {
+      // Por segurança, não devemos revelar se o usuário existe ou se a senha está incorreta
+      const specificErrorMessage = "Usuário não encontrado";
+      mockLogin.mockRejectedValue({ message: specificErrorMessage });
       renderLoginPage();
 
       const usernameInput = screen.getByPlaceholderText(/Nome de usuário/i);
@@ -355,11 +356,17 @@ describe("LoginPage", () => {
       fireEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith(errorMessage);
+        // Sempre deve mostrar mensagem genérica para evitar enumeração de usuários
+        expect(toast.error).toHaveBeenCalledWith(
+          "Credenciais inválidas. Verifique seu usuário e senha."
+        );
+        // Não deve mostrar a mensagem específica
+        expect(toast.error).not.toHaveBeenCalledWith(specificErrorMessage);
       });
     });
 
-    it("trata erro como array de mensagens", async () => {
+    it("sempre mostra mensagem genérica mesmo com array de mensagens (segurança)", async () => {
+      // Por segurança, sempre mostrar mensagem genérica, mesmo com array de erros
       const errorMessages = ["Erro 1", "Erro 2"];
       mockLogin.mockRejectedValue(errorMessages);
       renderLoginPage();
@@ -373,7 +380,10 @@ describe("LoginPage", () => {
       fireEvent.click(loginButton);
 
       await waitFor(() => {
-        expect(toast.error).toHaveBeenCalledWith("Erro 1, Erro 2");
+        // Sempre deve mostrar mensagem genérica para evitar enumeração de usuários
+        expect(toast.error).toHaveBeenCalledWith(
+          "Credenciais inválidas. Verifique seu usuário e senha."
+        );
       });
     });
 
