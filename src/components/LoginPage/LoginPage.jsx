@@ -45,15 +45,9 @@ const LoginPage = () => {
       toast.success("Login realizado com sucesso!");
       navigate("/dashboard");
     } catch (err) {
-      let errorMessage = "Erro ao fazer login. Verifique suas credenciais.";
-
-      if (err.message) {
-        errorMessage = err.message;
-      } else if (Array.isArray(err)) {
-        errorMessage = err.join(", ");
-      }
-
-      toast.error(errorMessage);
+      // Sempre exibir mensagem genérica para evitar enumeração de usuários
+      // Não revelar se o usuário existe ou se a senha está incorreta
+      toast.error("Credenciais inválidas. Verifique seu usuário e senha.");
     } finally {
       setLoading(false);
     }
