@@ -9,6 +9,10 @@ import {
 } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-toastify";
+import {
+  validateUsername,
+  validateMaxLength,
+} from "../../utils/inputValidation";
 import "./LoginPage.css";
 
 const LoginPage = () => {
@@ -36,6 +40,27 @@ const LoginPage = () => {
 
     if (!username || !password) {
       toast.error("Por favor, preencha todos os campos");
+      setLoading(false);
+      return;
+    }
+
+    // Validação de segurança: prevenir XSS e SQL Injection
+    if (!validateUsername(username)) {
+      toast.error(
+        "Nome de usuário inválido. Use apenas letras, números, hífen e underscore."
+      );
+      setLoading(false);
+      return;
+    }
+
+    if (!validateMaxLength(username, 20)) {
+      toast.error("Nome de usuário muito longo. Máximo 20 caracteres.");
+      setLoading(false);
+      return;
+    }
+
+    if (!validateMaxLength(password, 255)) {
+      toast.error("Senha muito longa.");
       setLoading(false);
       return;
     }
