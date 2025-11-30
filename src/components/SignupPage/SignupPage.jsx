@@ -13,6 +13,12 @@ import {
 import { Link } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-toastify";
+import {
+  validateEmail,
+  validateUsername,
+  sanitizeFormData,
+  validateMaxLength,
+} from "../../utils/inputValidation";
 import "./SignupPage.css";
 
 const SignUp = () => {
@@ -91,7 +97,7 @@ const SignUp = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validações
+    // Validações básicas
     if (
       !formData.firstName ||
       !formData.username ||
@@ -100,6 +106,29 @@ const SignUp = () => {
       !acceptedTerms
     ) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    // Validações de segurança: prevenir XSS e SQL Injection
+    if (!validateEmail(formData.email)) {
+      toast.error("Por favor, insira um email válido");
+      return;
+    }
+
+    if (!validateUsername(formData.username)) {
+      toast.error(
+        "Nome de usuário inválido. Use apenas letras, números, hífen e underscore (3-20 caracteres)."
+      );
+      return;
+    }
+
+    if (!validateMaxLength(formData.firstName, 50)) {
+      toast.error("Nome muito longo. Máximo 50 caracteres.");
+      return;
+    }
+
+    if (!validateMaxLength(formData.email, 100)) {
+      toast.error("Email muito longo. Máximo 100 caracteres.");
       return;
     }
 
@@ -113,14 +142,24 @@ const SignUp = () => {
       return;
     }
 
+    if (!validateMaxLength(password, 255)) {
+      toast.error("Senha muito longa.");
+      return;
+    }
+
     setLoading(true);
 
     try {
+      // Sanitizar dados antes de enviar - prevenir XSS
+      const sanitizedData = sanitizeFormData(formData);
+
       // Preparar dados para a API
       const userData = {
-        nome: `${formData.firstName} ${formData.lastName}`.trim(),
-        username: formData.username,
-        email: formData.email,
+        nome: `${sanitizedData.firstName} ${
+          sanitizedData.lastName || ""
+        }`.trim(),
+        username: sanitizedData.username,
+        email: sanitizedData.email.toLowerCase().trim(),
         password: password,
         tipo: "UsuarioComum", // Tipo padrão
       };
