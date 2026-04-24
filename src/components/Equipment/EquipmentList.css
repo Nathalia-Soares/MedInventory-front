@@ -46,6 +46,38 @@
   margin: 0;
 }
 
+.equipment-header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.equipment-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.equipment-export-btn:hover:not(:disabled) {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.equipment-export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .equipment-add-btn {
   display: flex;
   align-items: center;
@@ -402,6 +434,13 @@
     gap: 1rem;
   }
 
+  .equipment-header-actions {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .equipment-export-btn,
   .equipment-add-btn {
     width: 100%;
     justify-content: center;

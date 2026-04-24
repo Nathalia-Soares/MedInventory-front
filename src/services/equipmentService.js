@@ -1,4 +1,4 @@
-import api from "../utils/api";
+import api from '../utils/api';
 
 const equipmentService = {
   // Listar equipamentos com filtros e paginação
@@ -9,7 +9,7 @@ const equipmentService = {
         limit: limit.toString(),
         ...filters,
       });
-      
+
       const response = await api.get(`/equipamentos?${params.toString()}`);
       return response.data;
     } catch (error) {
@@ -30,7 +30,7 @@ const equipmentService = {
   // Criar novo equipamento
   async create(equipmentData) {
     try {
-      const response = await api.post("/equipamentos", equipmentData);
+      const response = await api.post('/equipamentos', equipmentData);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -63,6 +63,19 @@ const equipmentService = {
   async delete(id) {
     try {
       const response = await api.delete(`/equipamentos/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  },
+
+  // Exportar equipamentos para CSV
+  async exportCsv(filters = {}) {
+    try {
+      const params = new URLSearchParams(filters);
+      const response = await api.get(
+        `/equipamentos/export/csv?${params.toString()}`,
+      );
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

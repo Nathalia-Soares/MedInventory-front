@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import Sidebar from "../Dashboard/Sidebar";
-import equipmentService from "../../services/equipmentService";
-import { toast } from "react-toastify";
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import Sidebar from '../Dashboard/Sidebar';
+import equipmentService from '../../services/equipmentService';
+import { toast } from 'react-toastify';
 import {
   FaSearch,
   FaPlus,
@@ -15,8 +15,9 @@ import {
   FaBars,
   FaExclamationTriangle,
   FaTimes,
-} from "react-icons/fa";
-import "./EquipmentList.css";
+  FaDownload,
+} from 'react-icons/fa';
+import './EquipmentList.css';
 
 const EquipmentList = () => {
   const navigate = useNavigate();
@@ -25,12 +26,12 @@ const EquipmentList = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
-    nome: "",
-    tipo: "",
-    setorAtual: "",
-    statusOperacional: "",
+    nome: '',
+    tipo: '',
+    setorAtual: '',
+    statusOperacional: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -41,26 +42,27 @@ const EquipmentList = () => {
     equipment: null,
   });
   const [deleting, setDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const loadEquipment = useCallback(async () => {
     try {
       setLoading(true);
       const activeFilters = Object.fromEntries(
-        Object.entries(filters).filter(([_, value]) => value !== "")
+        Object.entries(filters).filter(([_, value]) => value !== ''),
       );
 
       const response = await equipmentService.getAll(
         activeFilters,
         currentPage,
-        limit
+        limit,
       );
 
       setEquipment(response.data);
       setTotal(response.meta.total);
       setTotalPages(response.meta.totalPages);
     } catch (error) {
-      console.error("Erro ao carregar equipamentos:", error);
-      toast.error("Erro ao carregar equipamentos");
+      console.error('Erro ao carregar equipamentos:', error);
+      toast.error('Erro ao carregar equipamentos');
     } finally {
       setLoading(false);
     }
@@ -82,12 +84,12 @@ const EquipmentList = () => {
 
   const clearFilters = () => {
     setFilters({
-      nome: "",
-      tipo: "",
-      setorAtual: "",
-      statusOperacional: "",
+      nome: '',
+      tipo: '',
+      setorAtual: '',
+      statusOperacional: '',
     });
-    setSearchTerm("");
+    setSearchTerm('');
     setCurrentPage(1);
   };
 
@@ -105,43 +107,87 @@ const EquipmentList = () => {
     try {
       setDeleting(true);
       await equipmentService.delete(deleteModal.equipment.id);
-      toast.success("Equipamento excluído com sucesso");
+      toast.success('Equipamento excluído com sucesso');
       closeDeleteModal();
       loadEquipment();
     } catch (error) {
-      console.error("Erro ao excluir equipamento:", error);
-      toast.error("Erro ao excluir equipamento");
+      console.error('Erro ao excluir equipamento:', error);
+      toast.error('Erro ao excluir equipamento');
     } finally {
       setDeleting(false);
     }
   };
 
+  const handleExportCsv = async () => {
+    try {
+      setIsExporting(true);
+      const activeFilters = Object.fromEntries(
+        Object.entries(filters).filter(([_, value]) => value !== ''),
+      );
+
+      const response = await equipmentService.exportCsv(activeFilters);
+
+      if (response.downloadUrl) {
+        const link = document.createElement('a');
+        link.href = response.downloadUrl;
+        link.download = response.fileName || 'equipamentos.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Equipamentos exportados com sucesso');
+      } else {
+        toast.error('Erro ao obter URL de download');
+      }
+    } catch (error) {
+      console.error('Erro ao exportar equipamentos:', error);
+      
+      // Tratamento específico para erro 403
+      if (error.response?.status === 403) {
+        toast.error(
+          'Permissão negada. Apenas Administradores e Gestores podem exportar equipamentos.',
+        );
+      } else if (error.response?.status === 503) {
+        toast.error('Armazenamento não configurado. Contate o administrador.');
+      } else {
+        toast.error('Erro ao exportar equipamentos para CSV');
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const canExportCsv = () => {
+    if (!user) return false;
+    const userType = user.tipo || user.userType;
+    return userType === 'Administrador' || userType === 'Gestor';
+  };
+
   const getStatusBadgeClass = (status) => {
     const statusClasses = {
-      DISPONIVEL: "status-disponivel",
-      EM_USO: "status-em-uso",
-      EM_MANUTENCAO: "status-manutencao",
-      INATIVO: "status-inativo",
-      SUCATEADO: "status-sucateado",
+      DISPONIVEL: 'status-disponivel',
+      EM_USO: 'status-em-uso',
+      EM_MANUTENCAO: 'status-manutencao',
+      INATIVO: 'status-inativo',
+      SUCATEADO: 'status-sucateado',
     };
-    return statusClasses[status] || "";
+    return statusClasses[status] || '';
   };
 
   const getStatusLabel = (status) => {
     const statusLabels = {
-      DISPONIVEL: "Disponível",
-      EM_USO: "Em Uso",
-      EM_MANUTENCAO: "Em Manutenção",
-      INATIVO: "Inativo",
-      SUCATEADO: "Sucateado",
+      DISPONIVEL: 'Disponível',
+      EM_USO: 'Em Uso',
+      EM_MANUTENCAO: 'Em Manutenção',
+      INATIVO: 'Inativo',
+      SUCATEADO: 'Sucateado',
     };
     return statusLabels[status] || status;
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return "-";
+    if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString("pt-BR");
+    return date.toLocaleDateString('pt-BR');
   };
 
   return (
@@ -154,7 +200,7 @@ const EquipmentList = () => {
         onMobileToggle={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
       />
       <div
-        className={`equipment-container ${sidebarCollapsed ? "collapsed" : ""}`}
+        className={`equipment-container ${sidebarCollapsed ? 'collapsed' : ''}`}
       >
         <div className="equipment-inner">
           {/* Mobile Menu Button */}
@@ -172,13 +218,28 @@ const EquipmentList = () => {
                 Gerencie e visualize todos os equipamentos hospitalares
               </p>
             </div>
-            <button
-              className="equipment-add-btn"
-              onClick={() => navigate("/equipment/new")}
-            >
-              <FaPlus />
-              Adicionar Equipamento
-            </button>
+            <div className="equipment-header-actions">
+              <button
+                className="equipment-export-btn"
+                onClick={handleExportCsv}
+                disabled={isExporting || !canExportCsv()}
+                title={
+                  !canExportCsv()
+                    ? 'Apenas Administradores e Gestores podem exportar'
+                    : 'Exportar equipamentos para CSV'
+                }
+              >
+                <FaDownload />
+                {isExporting ? 'Exportando...' : 'Exportar CSV'}
+              </button>
+              <button
+                className="equipment-add-btn"
+                onClick={() => navigate('/equipment/new')}
+              >
+                <FaPlus />
+                Adicionar Equipamento
+              </button>
+            </div>
           </div>
 
           {/* Search and Filters */}
@@ -191,7 +252,7 @@ const EquipmentList = () => {
                 placeholder="Pesquisar por nome..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
               <button className="equipment-search-btn" onClick={handleSearch}>
                 Buscar
@@ -207,7 +268,7 @@ const EquipmentList = () => {
                 className="equipment-filter-input"
                 placeholder="Tipo de equipamento"
                 value={filters.tipo}
-                onChange={(e) => handleFilterChange("tipo", e.target.value)}
+                onChange={(e) => handleFilterChange('tipo', e.target.value)}
               />
             </div>
             <div className="equipment-filter-item">
@@ -218,7 +279,7 @@ const EquipmentList = () => {
                 placeholder="Setor atual"
                 value={filters.setorAtual}
                 onChange={(e) =>
-                  handleFilterChange("setorAtual", e.target.value)
+                  handleFilterChange('setorAtual', e.target.value)
                 }
               />
             </div>
@@ -228,7 +289,7 @@ const EquipmentList = () => {
                 className="equipment-filter-select"
                 value={filters.statusOperacional}
                 onChange={(e) =>
-                  handleFilterChange("statusOperacional", e.target.value)
+                  handleFilterChange('statusOperacional', e.target.value)
                 }
               >
                 <option value="">Todos</option>
@@ -285,11 +346,11 @@ const EquipmentList = () => {
                       <td>{item.tipo}</td>
                       <td>{item.fabricante}</td>
                       <td>{item.modelo}</td>
-                      <td>{item.setorAtual || "-"}</td>
+                      <td>{item.setorAtual || '-'}</td>
                       <td>
                         <span
                           className={`equipment-status-badge ${getStatusBadgeClass(
-                            item.statusOperacional
+                            item.statusOperacional,
                           )}`}
                         >
                           {getStatusLabel(item.statusOperacional)}
@@ -375,7 +436,7 @@ const EquipmentList = () => {
             </div>
             <h2 className="equipment-delete-modal-title">Confirmar Exclusão</h2>
             <p className="equipment-delete-modal-text">
-              Tem certeza que deseja excluir o equipamento{" "}
+              Tem certeza que deseja excluir o equipamento{' '}
               <strong>"{deleteModal.equipment?.nome}"</strong>?
               <br />
               Esta ação não pode ser desfeita.
