@@ -75,8 +75,22 @@ const equipmentService = {
       const params = new URLSearchParams(filters);
       const response = await api.get(
         `/equipamentos/export/csv?${params.toString()}`,
+        {
+          responseType: 'blob',
+          headers: {
+            Accept: 'text/csv',
+          },
+        },
       );
-      return response.data;
+
+      const contentDisposition = response.headers?.['content-disposition'];
+      let fileName = 'equipamentos.csv';
+      if (contentDisposition) {
+        const match = /filename="?([^"]+)"?/i.exec(contentDisposition);
+        if (match?.[1]) fileName = match[1];
+      }
+
+      return { blob: response.data, fileName };
     } catch (error) {
       throw error.response?.data || error;
     }
