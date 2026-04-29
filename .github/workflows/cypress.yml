@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
@@ -17,22 +18,10 @@ jobs:
       - name: Instalar dependências
         run: yarn install
 
-      - name: Start backend API (8080)
-        run: |
-          docker run -d --name api -p 8080:8080 \
-            -e NODE_ENV=test \
-            <YOUR_BACKEND_IMAGE>:<TAG>
-
       - name: Start app (modo dev)
         run: yarn start &
         env:
           CI: true
 
-      - name: Wait for servers
-        run: |
-          npx wait-on http://localhost:3000 http://localhost:8080/auth/login
-
       - name: Rodar Cypress
         run: yarn cypress:run
-        env:
-          API_URL: http://localhost:8080
