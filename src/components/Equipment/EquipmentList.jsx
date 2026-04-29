@@ -125,19 +125,18 @@ const EquipmentList = () => {
         Object.entries(filters).filter(([_, value]) => value !== ''),
       );
 
-      const response = await equipmentService.exportCsv(activeFilters);
+      const { blob, fileName } = await equipmentService.exportCsv(activeFilters);
+      const url = window.URL.createObjectURL(blob);
 
-      if (response.downloadUrl) {
-        const link = document.createElement('a');
-        link.href = response.downloadUrl;
-        link.download = response.fileName || 'equipamentos.csv';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        toast.success('Equipamentos exportados com sucesso');
-      } else {
-        toast.error('Erro ao obter URL de download');
-      }
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName || 'equipamentos.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Equipamentos exportados com sucesso');
     } catch (error) {
       console.error('Erro ao exportar equipamentos:', error);
       
